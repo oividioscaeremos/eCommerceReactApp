@@ -5,7 +5,10 @@ import ShopPage from './pages/shop/shop.component'
 import { Route } from 'react-router-dom';
 import Header from './components/header/header.component';
 import SignInAndSignUpPage from './pages/sign-in-and-sign-up/sign-in-and-sign-up.component';
-import { auth } from './firebase/firebase.utils';
+import {
+  auth,
+  createUserProfileDocument
+} from './firebase/firebase.utils';
 
 class App extends React.Component {
   constructor(){
@@ -19,10 +22,23 @@ class App extends React.Component {
   unSubFromAuth = null;
 
   componentDidMount(){
-    this.unSubFromAuth = auth.onAuthStateChanged(user => {
-      this.setState({currentUser : user});
+    this.unSubFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if(userAuth){
+        const userRef = await createUserProfileDocument(userAuth);
 
-      console.log(user);
+        userRef.onSnapshot(snapshot => {
+          this.setState({
+            currentUser : {
+              id:snapshot.id,
+              ...snapshot.data()
+            }
+          }, () => {
+            console.log(this.state);
+          })
+        });
+      }
+
+      this.setState({currentUser : userAuth});
     });
   }
 
